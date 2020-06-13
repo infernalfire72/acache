@@ -2,13 +2,15 @@ package beatmaps
 
 import (
 	"database/sql"
+	"sync"
 	"time"
 
 	"github.com/infernalfire72/acache/config"
 	"github.com/infernalfire72/acache/log"
 )
 
-var Cache *BeatmapCache
+var bmutex 	sync.Mutex
+var Cache 	*BeatmapCache
 
 type BeatmapCache struct {
 	Beatmaps	map[string]*Beatmap
@@ -40,7 +42,9 @@ func (c *BeatmapCache) UpdateCache(md5 string) *Beatmap {
 		log.Error(err)
 	}
 	b.LastUpdate = time.Now()
+	bmutex.Lock()
 	c.Beatmaps[md5] = b
+	bmutex.Unlock()
 	return b
 }
 

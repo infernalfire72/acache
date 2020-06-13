@@ -24,7 +24,7 @@ func (l *Leaderboard) Sort() {
 	if m == nil {
 		return
 	}
-	
+
 	sort.Slice(l.Scores, func(i, j int) bool {
 		if !l.Relax || m.Status == beatmaps.Loved {
 			return l.Scores[i].Score > l.Scores[j].Score

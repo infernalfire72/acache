@@ -1,6 +1,8 @@
 package leaderboards
 
 import (
+	"sync"
+	
 	"github.com/infernalfire72/acache/config"
 	"github.com/infernalfire72/acache/log"
 )
@@ -11,7 +13,8 @@ type Identifier struct {
 	Relax	bool
 }
 
-var Cache *LeaderboardCache
+var lmutex 	sync.Mutex
+var Cache 	*LeaderboardCache
 
 type LeaderboardCache struct {
 	Leaderboards	map[Identifier]*Leaderboard
@@ -34,7 +37,9 @@ func (c *LeaderboardCache) UpdateCache(identifier Identifier) *Leaderboard {
 		Relax:		identifier.Relax,
 	}
 	lb.UpdateCache()
+	lmutex.Lock()
 	c.Leaderboards[identifier] = lb
+	lmutex.Unlock()
 	return lb
 }
 
