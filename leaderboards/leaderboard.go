@@ -70,9 +70,9 @@ func (l *Leaderboard) UpdateCache() {
 
 	l.Scores = make([]Score, 0)
 
-	var table string
+	table := "scores"
 	if l.Relax {
-		table = "_relax"
+		table = "scores_relax"
 	}
 
 	tableSort := "score"
@@ -80,7 +80,7 @@ func (l *Leaderboard) UpdateCache() {
 		tableSort = "pp"
 	}
 
-	rows, err := config.DB.Query("SELECT scores" + table + ".id, userid, score, pp, username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time FROM scores" + table + " LEFT JOIN users ON users.id = userid WHERE beatmap_md5 = ? AND completed = 3 AND play_mode = ? AND users.privileges & 1 ORDER BY "+ tableSort +" DESC", l.BeatmapMd5, l.Mode)
+	rows, err := config.DB.Query("SELECT " + table + ".id, userid, score, pp, username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time FROM " + table + " LEFT JOIN users ON users.id = userid WHERE beatmap_md5 = ? AND completed = 3 AND play_mode = ? AND users.privileges & 1 ORDER BY "+ tableSort +" DESC", l.BeatmapMd5, l.Mode)
 	if err != nil {
 		log.Error(err)
 	}
