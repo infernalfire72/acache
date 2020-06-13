@@ -1,6 +1,7 @@
 package beatmaps
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/infernalfire72/acache/config"
@@ -35,7 +36,7 @@ func (c *BeatmapCache) UpdateCache(md5 string) *Beatmap {
 	err := config.DB.QueryRow("SELECT beatmap_id, beatmapset_id, song_name, ranked, playcount, passcount FROM beatmaps WHERE beatmap_md5 = ?", md5).Scan(
 		&b.ID, &b.SetID, &b.Name, &b.Status, &b.Playcount, &b.Passcount,
 	)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		log.Error(err)
 	}
 	b.LastUpdate = time.Now()
