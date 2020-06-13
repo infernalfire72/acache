@@ -32,6 +32,7 @@ func main() {
 	err := config.DB.Ping()
 	if err != nil {
 		log.Error(err)
+		return
 	}
 	log.Info("Connection to Database established")
 
