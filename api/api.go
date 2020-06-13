@@ -18,22 +18,8 @@ func Start() {
 	r.GET("/", MemHandler)
 	r.GET("/beatmap/", BeatmapHandler)
 	r.GET("/leaderboard/", LeaderboardHandler)
-	r.GET("/rm", Rm)
-	r.GET("/ad", Ad)
 	log.Info("Starting API")
 	log.Error(fasthttp.ListenAndServe(":5000", r.Handler))
-}
-
-func Rm(ctx *fasthttp.RequestCtx) {
-	id := ctx.QueryArgs().GetUintOrZero("i")
-
-	leaderboards.Cache.RemoveUser(id)
-}
-
-func Ad(ctx *fasthttp.RequestCtx) {
-	id := ctx.QueryArgs().GetUintOrZero("i")
-
-	leaderboards.Cache.AddUser(id)
 }
 
 func MemHandler(ctx *fasthttp.RequestCtx) {
