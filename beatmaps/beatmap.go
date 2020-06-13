@@ -1,6 +1,9 @@
 package beatmaps
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type BeatmapStatus int
 
@@ -23,6 +26,7 @@ type Beatmap struct {
 	Status		BeatmapStatus
 	Playcount	int
 	Passcount	int
+	LastUpdate	time.Time
 }
 
 func (b *Beatmap) String(scoresCount int) string {
