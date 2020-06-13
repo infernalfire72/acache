@@ -60,6 +60,12 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 
 	u := qs.GetUintOrZero("user")
 
+	fl := qs.GetBool("friends") && u != 0 // jg vs jne who will win
+	var friendsFilter []int
+	if fl {
+		friendsFilter = tools.GetFriends(u)
+	}
+
 	sw := tools.Stopwatch{}
 	sw.Start()
 	lb := leaderboards.Cache.Get(leaderboards.Identifier{hash, byte(mode), rx})
@@ -67,7 +73,7 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 
 	ctx.WriteString(bmap.String(len(lb.Scores)))
 
-	if u > 0 {
+	if u != 0 {
 		personalBest, position := lb.FindUserScore(int(u))
 		if personalBest != nil {
 			ctx.WriteString(personalBest.String(!lb.Relax || bmap.Status == beatmaps.Loved, position + 1))
@@ -85,6 +91,8 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 
 		// We have applied a mod filter
 		if mods >= 0 && score.Mods != int(mods) {
+			continue
+		} else if fl && !tools.Has(friendsFilter, score.UserID) {
 			continue
 		}
 
