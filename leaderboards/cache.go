@@ -48,6 +48,15 @@ func (c *LeaderboardCache) RemoveUser(id int) {
 	}
 }
 
+// For Wipe
+func (c *LeaderboardCache) RemoveUserWithIdentifier(id int, rx bool) {
+	for _, a := range c.Leaderboards {
+		if a.Relax == rx {
+			a.RemoveUser(id)
+		}
+	}
+}
+
 func (c *LeaderboardCache) AddUser(id int) {
 	for i, a := range [...]string{"scores", "scores_relax"} {
 		var relax bool

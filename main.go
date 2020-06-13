@@ -5,10 +5,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/infernalfire72/acache/api"
+	"github.com/infernalfire72/acache/beatmaps"
 	"github.com/infernalfire72/acache/config"
 	"github.com/infernalfire72/acache/leaderboards"
-	"github.com/infernalfire72/acache/beatmaps"
 	"github.com/infernalfire72/acache/log"
+	"github.com/infernalfire72/acache/redisub"
 )
 
 func init() {
@@ -35,6 +36,6 @@ func main() {
 		return
 	}
 	log.Info("Connection to Database established")
-
+	redisub.Subscribe()
 	api.Start()
 }

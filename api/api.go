@@ -24,7 +24,7 @@ func Start() {
 
 func MemHandler(ctx *fasthttp.RequestCtx) {
 	var m runtime.MemStats
-    runtime.ReadMemStats(&m)
+	runtime.ReadMemStats(&m)
 
 	ctx.WriteString(strconv.FormatUint(m.TotalAlloc, 10))
 }
