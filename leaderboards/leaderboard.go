@@ -31,9 +31,13 @@ func (l *Leaderboard) Sort() {
 }
 
 func (l *Leaderboard) AddScore(s *Score) {
-	for _, a := range l.Scores {
+	for i, a := range l.Scores {
 		if a.ID == s.ID {
 			return
+		}
+
+		if a.UserID == s.UserID {
+			l.RemoveScoreIndex(i)
 		}
 	}
 

@@ -31,6 +31,7 @@ func ban(client *redis.Client) {
 		}
 		
 		leaderboards.Cache.RemoveUser(i)
+		log.Info("[RESTRICT] Wiped Cached Scores for", i)
 	}
 }
 
@@ -54,6 +55,7 @@ func unban(client *redis.Client) {
 		}
 		
 		leaderboards.Cache.AddUser(i)
+		log.Info("[UNRESTRICT] Added Scores to Cache for", i)
 	}
 }
 
@@ -89,6 +91,7 @@ func wipe(client *redis.Client) {
 		}
 		
 		leaderboards.Cache.RemoveUserWithIdentifier(i, rx)
+		log.Info("[WIPE] Wiped Cached Scores for", i, rx)
 	}
 }
 
@@ -171,6 +174,7 @@ func newScore(client *redis.Client) {
 		lbp := leaderboards.Cache.Leaderboards[leaderboards.Identifier{md5, mode, rx}]
 		if lbp != nil {
 			lbp.AddScore(s)
+			log.Info("Added Score", i, "to", md5)
 		}
 	}
 }
