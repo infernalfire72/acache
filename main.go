@@ -12,10 +12,16 @@ import (
 )
 
 func init() {
-	var err error
-	config.DB, err = sql.Open("mysql", "root:lol123@/ripple")
+	conf, err := config.Load()
 	if err != nil {
 		log.Error(err)
+		return
+	}
+
+	config.DB, err = sql.Open("mysql", conf.Database.String())
+	if err != nil {
+		log.Error(err)
+		return
 	}
 
 	beatmaps.Cache = &beatmaps.BeatmapCache{make(map[string]*beatmaps.Beatmap)}
