@@ -30,15 +30,34 @@ func (l *Leaderboard) Sort() {
 	})
 }
 
-func (l *Leaderboard) AddScore(s Score) {
-	l.Scores = append(l.Scores, s)
+func (l *Leaderboard) AddScore(s *Score) {
+	for _, a := range l.Scores {
+		if a.ID == s.ID {
+			return
+		}
+	}
+
+	l.Scores = append(l.Scores, *s)
 	l.Sort()
 }
 
+func (l *Leaderboard) RemoveScoreIndex(i int) {
+	l.Scores = append(l.Scores[:i], l.Scores[i+1:]...)
+}
+
 func (l *Leaderboard) RemoveScore(id int) {
-	for i := 0; i < len(l.Scores); i++ {
-		if l.Scores[i].ID == id {
-			l.Scores = append(l.Scores[:i], l.Scores[i+1:]...)
+	for i, a := range l.Scores {
+		if a.ID == id {
+			l.RemoveScoreIndex(i)
+			break
+		}
+	}
+}
+
+func (l *Leaderboard) RemoveUser(id int) {
+	for i, a := range l.Scores {
+		if a.UserID == id {
+			l.RemoveScoreIndex(i)
 			break
 		}
 	}
