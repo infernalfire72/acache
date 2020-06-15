@@ -114,6 +114,7 @@ func Subscribe() {
 	go unban(Client)
 	go wipe(Client)
 	go newScore(Client)
+	go changeUsername(Client)
 }
 
 func newScore(client *redis.Client) {
