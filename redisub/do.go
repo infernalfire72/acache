@@ -178,3 +178,43 @@ func newScore(client *redis.Client) {
 		}
 	}
 }
+
+func changeUsername(client *redis.Client) {
+	ps, err := client.Subscribe("api:change_username")
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	log.Info("Subscribed to api:change_username")
+
+	for {
+		msg, err := ps.ReceiveMessage()
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		i, err := strconv.Atoi(msg.Payload)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		var newUsername string
+		err = config.DB.QueryRow("SELECT username FROM users WHERE id = ?", i).Scan(&newUsername)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				continue
+			}
+
+			log.Error(err)
+			continue
+		}
+
+		for _, lb := range leaderboards.Cache.Leaderboards {
+			if s, _ := lb.FindUserScore(i); s != nil {
+				s.Username = newUsername
+			}
+		}
+	}
+}
