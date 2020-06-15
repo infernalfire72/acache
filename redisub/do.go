@@ -17,7 +17,7 @@ func ban(client *redis.Client) {
 		log.Error(err)
 		return
 	}
-	log.Info("Subscribed to peppy:unban")
+	log.Info("Subscribed to peppy:ban")
 	for {
 		msg, err := ps.ReceiveMessage()
 		if err != nil {
