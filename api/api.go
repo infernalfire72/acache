@@ -1,8 +1,8 @@
 package api
 
 import (
-	"strconv"
 	"runtime"
+	"strconv"
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
@@ -76,7 +76,7 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 	if u != 0 {
 		personalBest, position := lb.FindUserScore(int(u))
 		if personalBest != nil {
-			ctx.WriteString(personalBest.String(!lb.Relax || bmap.Status == beatmaps.Loved, position + 1))
+			ctx.WriteString(personalBest.String(!lb.Relax || bmap.Status == beatmaps.Loved, position+1))
 		} else {
 			ctx.WriteString("\n")
 		}
@@ -96,10 +96,10 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 			continue
 		}
 
-		ctx.WriteString(score.String(!lb.Relax || bmap.Status == beatmaps.Loved, pos + 1))
+		ctx.WriteString(score.String(!lb.Relax || bmap.Status == beatmaps.Loved, pos+1))
 		pos++
 	}
-	
+
 	sw.Stop()
 	log.Infof("Served Leaderboard for %s[%t, %d, %d] in %s", hash, rx, mode, limit, sw.ElapsedReadable())
 }

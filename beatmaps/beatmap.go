@@ -19,14 +19,14 @@ const (
 )
 
 type Beatmap struct {
-	Md5			string
-	ID			int
-	SetID		int
-	Name		string
-	Status		BeatmapStatus
-	Playcount	int
-	Passcount	int
-	LastUpdate	time.Time
+	Md5        string
+	ID         int
+	SetID      int
+	Name       string
+	Status     BeatmapStatus
+	Playcount  int
+	Passcount  int
+	LastUpdate time.Time
 }
 
 func (b *Beatmap) String(scoresCount int) string {

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/infernalfire72/acache/config"
-	"github.com/infernalfire72/acache/log"
 	"github.com/infernalfire72/acache/leaderboards"
+	"github.com/infernalfire72/acache/log"
 	"gopkg.in/redis.v5"
 )
 
@@ -29,7 +29,7 @@ func ban(client *redis.Client) {
 		if err != nil {
 			continue
 		}
-		
+
 		leaderboards.Cache.RemoveUser(i)
 		log.Info("[RESTRICT] Wiped Cached Scores for", i)
 	}
@@ -53,7 +53,7 @@ func unban(client *redis.Client) {
 		if err != nil {
 			continue
 		}
-		
+
 		leaderboards.Cache.AddUser(i)
 		log.Info("[UNRESTRICT] Added Scores to Cache for", i)
 	}
@@ -89,7 +89,7 @@ func wipe(client *redis.Client) {
 			log.Error(err)
 			continue
 		}
-		
+
 		leaderboards.Cache.RemoveUserWithIdentifier(i, rx)
 		log.Info("[WIPE] Wiped Cached Scores for", i, rx)
 	}
@@ -99,12 +99,12 @@ var Client *redis.Client
 
 func Subscribe() {
 	Client = redis.NewClient(&redis.Options{
-        Addr:     "localhost:6379",
-        Password: "", // no password set
-        DB:       0,  // use default DB
-    })
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
 
-    _, err := Client.Ping().Result()
+	_, err := Client.Ping().Result()
 	if err != nil {
 		log.Error(err)
 		return
@@ -156,10 +156,10 @@ func newScore(client *redis.Client) {
 
 		s := &leaderboards.Score{}
 		var (
-			md5		string
-			mode	byte
+			md5  string
+			mode byte
 		)
-		err = config.DB.QueryRow("SELECT " + table + ".id, userid, score, pp, username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5 FROM " + table + " LEFT JOIN users ON users.id = userid WHERE " + table + ".id = ? AND completed = 3", i).Scan(
+		err = config.DB.QueryRow("SELECT "+table+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5 FROM "+table+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE "+table+".id = ? AND completed = 3", i).Scan(
 			&s.ID, &s.UserID, &s.Score, &s.Performance, &s.Username, &s.Combo, &s.FullCombo, &s.Mods, &s.N300, &s.N100, &s.N50, &s.NKatu, &s.NGeki, &s.NMiss, &s.Timestamp, &mode, &md5,
 		)
 

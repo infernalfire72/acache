@@ -9,11 +9,11 @@ import (
 	"github.com/infernalfire72/acache/log"
 )
 
-var bmutex 	sync.Mutex
-var Cache 	*BeatmapCache
+var bmutex sync.Mutex
+var Cache *BeatmapCache
 
 type BeatmapCache struct {
-	Beatmaps	map[string]*Beatmap
+	Beatmaps map[string]*Beatmap
 }
 
 func (c *BeatmapCache) Get(md5 string) *Beatmap {
@@ -32,7 +32,7 @@ func (c *BeatmapCache) Get(md5 string) *Beatmap {
 
 func (c *BeatmapCache) UpdateCache(md5 string) *Beatmap {
 	b := &Beatmap{
-		Md5:	md5,
+		Md5: md5,
 	}
 
 	err := config.DB.QueryRow("SELECT beatmap_id, beatmapset_id, song_name, ranked, playcount, passcount FROM beatmaps WHERE beatmap_md5 = ?", md5).Scan(

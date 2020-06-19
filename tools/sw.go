@@ -6,8 +6,8 @@ import (
 )
 
 type Stopwatch struct {
-	tStarted	time.Time
-	Elapsed		time.Duration
+	tStarted time.Time
+	Elapsed  time.Duration
 }
 
 func (s *Stopwatch) Start() {
@@ -19,7 +19,7 @@ func (s *Stopwatch) Stop() {
 	s.Elapsed = tEnded.Sub(s.tStarted)
 }
 
-var formats = [...]string { "ns", "µs", "ms", "s" }
+var formats = [...]string{"ns", "µs", "ms", "s"}
 
 func (s *Stopwatch) ElapsedReadable() string {
 	tElapsed := s.Elapsed.Nanoseconds()

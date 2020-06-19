@@ -2,9 +2,9 @@ package tools
 
 import (
 	"database/sql"
-	
-	"github.com/infernalfire72/acache/log"
+
 	"github.com/infernalfire72/acache/config"
+	"github.com/infernalfire72/acache/log"
 )
 
 func GetFriends(id int) []int {
@@ -17,7 +17,7 @@ func GetFriends(id int) []int {
 		return friends
 	}
 	defer rows.Close()
-	
+
 	for rows.Next() {
 		var user2 int
 		err = rows.Scan(&user2)
@@ -27,6 +27,6 @@ func GetFriends(id int) []int {
 		}
 		friends = append(friends, user2)
 	}
-	
+
 	return friends
 }

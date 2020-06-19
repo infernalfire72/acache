@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	Database	sqlConf	`ctag:"Database"`
+	Database sqlConf `ctag:"Database"`
 }
 
 func Create() {
@@ -19,7 +19,7 @@ Host=
 Username=root
 Password=`
 
-	f,err := os.Create("./cache.conf")
+	f, err := os.Create("./cache.conf")
 	if err != nil {
 		log.Error(err)
 		return
@@ -32,7 +32,7 @@ Password=`
 
 func Load() (*Config, error) {
 	c := &Config{
-		Database:	sqlConf{},
+		Database: sqlConf{},
 	}
 
 	file, err := os.Open("./cache.conf")
@@ -66,7 +66,7 @@ func Load() (*Config, error) {
 		log.Error(err)
 	}
 
-	getValue := func (key, vdefault string) string {
+	getValue := func(key, vdefault string) string {
 		v := kvp[key]
 		if v != "" {
 			return v
@@ -76,7 +76,7 @@ func Load() (*Config, error) {
 	}
 
 	c.Database.Database = getValue("Database", "akatsuki")
-	c.Database.Host     = getValue("Host", "")
+	c.Database.Host = getValue("Host", "")
 	c.Database.Username = getValue("Username", "root")
 	c.Database.Password = getValue("Password", "")
 

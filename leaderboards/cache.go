@@ -2,22 +2,22 @@ package leaderboards
 
 import (
 	"sync"
-	
+
 	"github.com/infernalfire72/acache/config"
 	"github.com/infernalfire72/acache/log"
 )
 
 type Identifier struct {
-	Md5		string
-	Mode	byte
-	Relax	bool
+	Md5   string
+	Mode  byte
+	Relax bool
 }
 
-var lmutex 	sync.Mutex
-var Cache 	*LeaderboardCache
+var lmutex sync.Mutex
+var Cache *LeaderboardCache
 
 type LeaderboardCache struct {
-	Leaderboards	map[Identifier]*Leaderboard
+	Leaderboards map[Identifier]*Leaderboard
 }
 
 func (c *LeaderboardCache) Get(identifier Identifier) *Leaderboard {
@@ -32,9 +32,9 @@ func (c *LeaderboardCache) Get(identifier Identifier) *Leaderboard {
 
 func (c *LeaderboardCache) UpdateCache(identifier Identifier) *Leaderboard {
 	lb := &Leaderboard{
-		BeatmapMd5:	identifier.Md5,
-		Mode:		identifier.Mode,
-		Relax:		identifier.Relax,
+		BeatmapMd5: identifier.Md5,
+		Mode:       identifier.Mode,
+		Relax:      identifier.Relax,
 	}
 	lb.UpdateCache()
 	lmutex.Lock()
@@ -69,7 +69,7 @@ func (c *LeaderboardCache) AddUser(id int) {
 			relax = true
 		}
 
-		rows, err := config.DB.Query("SELECT " + a + ".id, userid, score, pp, username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5 FROM "+ a +" LEFT JOIN users ON users.id = userid WHERE userid = ? AND completed = 3", id)
+		rows, err := config.DB.Query("SELECT "+a+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5 FROM "+a+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE userid = ? AND completed = 3", id)
 		if err != nil {
 			log.Error(err)
 		}
@@ -78,8 +78,8 @@ func (c *LeaderboardCache) AddUser(id int) {
 		for rows.Next() {
 			s := &Score{}
 			var (
-				md5		string
-				mode	byte
+				md5  string
+				mode byte
 			)
 			err = rows.Scan(&s.ID, &s.UserID, &s.Score, &s.Performance, &s.Username, &s.Combo, &s.FullCombo, &s.Mods, &s.N300, &s.N100, &s.N50, &s.NKatu, &s.NGeki, &s.NMiss, &s.Timestamp, &mode, &md5)
 			if err != nil {

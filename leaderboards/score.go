@@ -3,21 +3,21 @@ package leaderboards
 import "fmt"
 
 type Score struct {
-	ID			int
-	UserID		int
-	Username	string
-	Score		int
-	Performance	float32
-	Combo		int
-	FullCombo	bool
-	N50			int16
-	N100		int16
-	N300		int16
-	NMiss		int16
-	NKatu		int16
-	NGeki		int16
-	Mods		int
-	Timestamp	int
+	ID          int
+	UserID      int
+	Username    string
+	Score       int
+	Performance float32
+	Combo       int
+	FullCombo   bool
+	N50         int16
+	N100        int16
+	N300        int16
+	NMiss       int16
+	NKatu       int16
+	NGeki       int16
+	Mods        int
+	Timestamp   int
 }
 
 func (s *Score) String(displayScore bool, pos int) string {

@@ -57,7 +57,7 @@ func Info(v ...interface{}) {
 
 func Infof(format string, v ...interface{}) {
 	PrintColor(FgHiGreen, "INFO  | ")
-	fmt.Printf(format + "\n", v...)
+	fmt.Printf(format+"\n", v...)
 }
 
 func Error(err error) {
