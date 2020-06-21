@@ -13,7 +13,7 @@ type Identifier struct {
 	Relax bool
 }
 
-var lmutex sync.Mutex
+var lMutex sync.RWMutex
 var Cache *LeaderboardCache
 
 type LeaderboardCache struct {
@@ -21,8 +21,9 @@ type LeaderboardCache struct {
 }
 
 func (c *LeaderboardCache) Get(identifier Identifier) *Leaderboard {
+	lMutex.RLock()
 	lbp := c.Leaderboards[identifier]
-
+	lMutex.RUnlock()
 	if lbp != nil {
 		return lbp
 	} else {
@@ -37,29 +38,35 @@ func (c *LeaderboardCache) UpdateCache(identifier Identifier) *Leaderboard {
 		Relax:      identifier.Relax,
 	}
 	lb.UpdateCache()
-	lmutex.Lock()
+	lMutex.Lock()
 	c.Leaderboards[identifier] = lb
-	lmutex.Unlock()
+	lMutex.Unlock()
 	return lb
 }
 
 func (c *LeaderboardCache) Clear() {
+	lMutex.Lock()
 	c.Leaderboards = make(map[Identifier]*Leaderboard)
+	lMutex.Unlock()
 }
 
 func (c *LeaderboardCache) RemoveUser(id int) {
+	lMutex.RLock()
 	for _, a := range c.Leaderboards {
 		a.RemoveUser(id)
 	}
+	lMutex.RUnlock()
 }
 
 // For Wipe
 func (c *LeaderboardCache) RemoveUserWithIdentifier(id int, rx bool) {
+	lMutex.RLock()
 	for _, a := range c.Leaderboards {
 		if a.Relax == rx {
 			a.RemoveUser(id)
 		}
 	}
+	lMutex.RUnlock()
 }
 
 func (c *LeaderboardCache) AddUser(id int) {
@@ -86,10 +93,12 @@ func (c *LeaderboardCache) AddUser(id int) {
 				log.Error(err)
 			}
 
+			lMutex.RLock()
 			lbp := c.Leaderboards[Identifier{md5, mode, relax}]
 			if lbp != nil {
 				lbp.AddScore(s)
 			}
+			lMutex.RUnlock()
 		}
 	}
 }

@@ -84,6 +84,7 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 		ctx.WriteString("\n")
 	}
 	pos := 0
+	lb.Mutex.RLock()
 	for _, score := range lb.Scores {
 		if pos >= int(limit) {
 			break
@@ -99,7 +100,7 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 		ctx.WriteString(score.String(!lb.Relax || bmap.Status == beatmaps.Loved, pos+1))
 		pos++
 	}
-
+	lb.Mutex.RUnlock()
 	sw.Stop()
 	log.Infof("Served Leaderboard for %s[%t, %d, %d] in %s", hash, rx, mode, limit, sw.ElapsedReadable())
 }

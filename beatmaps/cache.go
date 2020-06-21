@@ -9,7 +9,7 @@ import (
 	"github.com/infernalfire72/acache/log"
 )
 
-var bmutex sync.Mutex
+var bMutex sync.RWMutex
 var Cache *BeatmapCache
 
 type BeatmapCache struct {
@@ -17,8 +17,9 @@ type BeatmapCache struct {
 }
 
 func (c *BeatmapCache) Get(md5 string) *Beatmap {
+	bMutex.RLock()
 	bmp := c.Beatmaps[md5]
-
+	bMutex.RUnlock()
 	if bmp != nil {
 		now := time.Now()
 		if now.Sub(bmp.LastUpdate).Seconds() >= 60 {
@@ -42,12 +43,14 @@ func (c *BeatmapCache) UpdateCache(md5 string) *Beatmap {
 		log.Error(err)
 	}
 	b.LastUpdate = time.Now()
-	bmutex.Lock()
+	bMutex.Lock()
 	c.Beatmaps[md5] = b
-	bmutex.Unlock()
+	bMutex.Unlock()
 	return b
 }
 
 func (c BeatmapCache) Clear() {
+	bMutex.Lock()
 	c.Beatmaps = make(map[string]*Beatmap)
+	bMutex.Unlock()
 }

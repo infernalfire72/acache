@@ -2,6 +2,7 @@ package leaderboards
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/infernalfire72/acache/beatmaps"
 	"github.com/infernalfire72/acache/config"
@@ -13,6 +14,7 @@ type Leaderboard struct {
 	Scores     []Score
 	Mode       byte
 	Relax      bool
+	Mutex      sync.RWMutex
 }
 
 func (l *Leaderboard) Map() *beatmaps.Beatmap {
@@ -24,7 +26,7 @@ func (l *Leaderboard) Sort() {
 	if m == nil {
 		return
 	}
-
+	l.Mutex.Lock()
 	sort.Slice(l.Scores, func(i, j int) bool {
 		if !l.Relax || m.Status == beatmaps.Loved {
 			return l.Scores[i].Score > l.Scores[j].Score
@@ -32,9 +34,11 @@ func (l *Leaderboard) Sort() {
 			return l.Scores[i].Performance > l.Scores[j].Performance
 		}
 	})
+	l.Mutex.Unlock()
 }
 
 func (l *Leaderboard) AddScore(s *Score) {
+	l.Mutex.Lock()
 	for i, a := range l.Scores {
 		if a.ID == s.ID {
 			return
@@ -46,6 +50,7 @@ func (l *Leaderboard) AddScore(s *Score) {
 	}
 
 	l.Scores = append(l.Scores, *s)
+	l.Mutex.Unlock()
 	l.Sort()
 }
 
@@ -54,21 +59,25 @@ func (l *Leaderboard) RemoveScoreIndex(i int) {
 }
 
 func (l *Leaderboard) RemoveScore(id int) {
+	l.Mutex.Lock()
 	for i, a := range l.Scores {
 		if a.ID == id {
 			l.RemoveScoreIndex(i)
 			break
 		}
 	}
+	l.Mutex.Unlock()
 }
 
 func (l *Leaderboard) RemoveUser(id int) {
+	l.Mutex.Lock()
 	for i, a := range l.Scores {
 		if a.UserID == id {
 			l.RemoveScoreIndex(i)
 			break
 		}
 	}
+	l.Mutex.Unlock()
 }
 
 func (l *Leaderboard) UpdateCache() {
@@ -94,6 +103,7 @@ func (l *Leaderboard) UpdateCache() {
 	}
 	defer rows.Close()
 
+	l.Mutex.Lock()
 	for rows.Next() {
 		var s Score
 		err = rows.Scan(&s.ID, &s.UserID, &s.Score, &s.Performance, &s.Username, &s.Combo, &s.FullCombo, &s.Mods, &s.N300, &s.N100, &s.N50, &s.NKatu, &s.NGeki, &s.NMiss, &s.Timestamp)
@@ -102,9 +112,12 @@ func (l *Leaderboard) UpdateCache() {
 		}
 		l.Scores = append(l.Scores, s)
 	}
+	l.Mutex.Unlock()
 }
 
 func (l *Leaderboard) FindUserScore(user int) (*Score, int) {
+	l.Mutex.RLock()
+	defer l.Mutex.RUnlock()
 	for i, score := range l.Scores {
 		if score.UserID == user {
 			return &score, i
