@@ -26,7 +26,7 @@ func MemHandler(ctx *fasthttp.RequestCtx) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 
-	ctx.WriteString(strconv.FormatUint(m.TotalAlloc, 10))
+	ctx.WriteString(strconv.FormatUint(m.Alloc, 10))
 }
 
 func BeatmapHandler(ctx *fasthttp.RequestCtx) {
@@ -68,39 +68,44 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 
 	sw := tools.Stopwatch{}
 	sw.Start()
-	lb := leaderboards.Cache.Get(leaderboards.Identifier{hash, byte(mode), rx})
-	bmap := lb.Map()
+	lb := leaderboards.Get(leaderboards.Identifier{hash, byte(mode), rx})
 
-	ctx.WriteString(bmap.String(len(lb.Scores)))
+	if m := lb.Map(); m != nil && m.Status >= beatmaps.StatusRanked {
+		sCount := lb.Count()
+		ctx.WriteString(m.String(sCount))
 
-	if u != 0 {
-		personalBest, position := lb.FindUserScore(int(u))
-		if personalBest != nil {
-			ctx.WriteString(personalBest.String(!lb.Relax || bmap.Status == beatmaps.Loved, position+1))
+		if u != 0 {
+			if personalBest, position := lb.FindUserScore(int(u)); personalBest != nil {
+				ctx.WriteString(personalBest.String(!lb.Relax || m.Status == beatmaps.StatusLoved, position+1))
+			} else {
+				ctx.WriteString("\n")
+			}
 		} else {
 			ctx.WriteString("\n")
 		}
-	} else {
-		ctx.WriteString("\n")
-	}
-	pos := 0
-	lb.Mutex.RLock()
-	for _, score := range lb.Scores {
-		if pos >= int(limit) {
-			break
-		}
 
-		// We have applied a mod filter
-		if mods >= 0 && score.Mods != int(mods) {
-			continue
-		} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
-			continue
-		}
+		lb.Mutex.RLock()
+		scores := lb.Scores
 
-		ctx.WriteString(score.String(!lb.Relax || bmap.Status == beatmaps.Loved, pos+1))
-		pos++
+		pos := 0
+		for _, score := range scores {
+			if pos >= int(limit) {
+				break
+			}
+
+			// We have applied a mod filter
+			if mods >= 0 && score.Mods != int(mods) {
+				continue
+			} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
+				continue
+			}
+
+			ctx.WriteString(score.String(!lb.Relax || m.Status == beatmaps.StatusLoved, pos+1))
+			pos++
+		}
+		lb.Mutex.RUnlock()
 	}
-	lb.Mutex.RUnlock()
+	ctx.SetConnectionClose()
 	sw.Stop()
 	log.Infof("Served Leaderboard for %s[%t, %d, %d] in %s", hash, rx, mode, limit, sw.ElapsedReadable())
 }

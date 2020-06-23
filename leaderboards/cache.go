@@ -7,76 +7,68 @@ import (
 	"github.com/infernalfire72/acache/log"
 )
 
-type Identifier struct {
-	Md5   string
-	Mode  byte
-	Relax bool
+var (
+	Mutex  sync.RWMutex
+	Values map[Identifier]*Leaderboard
+)
+
+func Init() {
+	Mutex.Lock()
+	Values = make(map[Identifier]*Leaderboard)
+	Mutex.Unlock()
 }
 
-var lMutex sync.RWMutex
-var Cache *LeaderboardCache
-
-type LeaderboardCache struct {
-	Leaderboards map[Identifier]*Leaderboard
-}
-
-func (c *LeaderboardCache) Get(identifier Identifier) *Leaderboard {
-	lMutex.RLock()
-	lbp := c.Leaderboards[identifier]
-	lMutex.RUnlock()
-	if lbp != nil {
-		return lbp
-	} else {
-		return c.UpdateCache(identifier)
+func Get(id Identifier) *Leaderboard {
+	Mutex.RLock()
+	if v, ok := Values[id]; ok {
+		Mutex.RUnlock()
+		return v
 	}
+	Mutex.RUnlock()
+	return FetchFromDb(id)
 }
 
-func (c *LeaderboardCache) UpdateCache(identifier Identifier) *Leaderboard {
+func FetchFromDb(identifier Identifier) *Leaderboard {
 	lb := &Leaderboard{
 		BeatmapMd5: identifier.Md5,
 		Mode:       identifier.Mode,
 		Relax:      identifier.Relax,
 	}
-	lb.UpdateCache()
-	lMutex.Lock()
-	c.Leaderboards[identifier] = lb
-	lMutex.Unlock()
+
+	lb.FetchFromDb()
+	Mutex.Lock()
+	defer Mutex.Unlock()
+
+	Values[identifier] = lb
 	return lb
 }
 
-func (c *LeaderboardCache) Clear() {
-	lMutex.Lock()
-	c.Leaderboards = make(map[Identifier]*Leaderboard)
-	lMutex.Unlock()
-}
-
-func (c *LeaderboardCache) RemoveUser(id int) {
-	lMutex.RLock()
-	for _, a := range c.Leaderboards {
+func RemoveUser(id int) {
+	Mutex.RLock()
+	for _, a := range Values {
 		a.RemoveUser(id)
 	}
-	lMutex.RUnlock()
+	Mutex.RUnlock()
 }
 
-// For Wipe
-func (c *LeaderboardCache) RemoveUserWithIdentifier(id int, rx bool) {
-	lMutex.RLock()
-	for _, a := range c.Leaderboards {
+func RemoveUserWithIdentifier(id int, rx bool) {
+	Mutex.RLock()
+	for _, a := range Values {
 		if a.Relax == rx {
 			a.RemoveUser(id)
 		}
 	}
-	lMutex.RUnlock()
+	Mutex.RUnlock()
 }
 
-func (c *LeaderboardCache) AddUser(id int) {
-	for i, a := range [...]string{"scores", "scores_relax"} {
+func AddUser(id int) {
+	for i, table := range [...]string{"scores", "scores_relax"} {
 		var relax bool
 		if i == 1 {
 			relax = true
 		}
 
-		rows, err := config.DB.Query("SELECT "+a+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5 FROM "+a+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE userid = ? AND completed = 3", id)
+		rows, err := config.DB.Query("SELECT "+table+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5 FROM "+table+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE userid = ? AND completed = 3", id)
 		if err != nil {
 			log.Error(err)
 		}
@@ -93,12 +85,22 @@ func (c *LeaderboardCache) AddUser(id int) {
 				log.Error(err)
 			}
 
-			lMutex.RLock()
-			lbp := c.Leaderboards[Identifier{md5, mode, relax}]
-			if lbp != nil {
-				lbp.AddScore(s)
+			id := Identifier{md5, mode, relax}
+			Mutex.RLock()
+			if value, ok := Values[id]; ok {
+				value.AddScore(s)
 			}
-			lMutex.RUnlock()
+			Mutex.RUnlock()
 		}
 	}
+}
+
+func ChangeUsername(id int, newUsername string) {
+	Mutex.RLock()
+	for _, lb := range Values {
+		if s, _ := lb.FindUserScore(id); s != nil {
+			s.Username = newUsername
+		}
+	}
+	Mutex.RUnlock()
 }

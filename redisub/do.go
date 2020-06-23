@@ -8,6 +8,7 @@ import (
 	"github.com/infernalfire72/acache/config"
 	"github.com/infernalfire72/acache/leaderboards"
 	"github.com/infernalfire72/acache/log"
+	"github.com/infernalfire72/acache/tools"
 	"gopkg.in/redis.v5"
 )
 
@@ -30,7 +31,7 @@ func ban(client *redis.Client) {
 			continue
 		}
 
-		leaderboards.Cache.RemoveUser(i)
+		leaderboards.RemoveUser(i)
 		log.Info("[RESTRICT] Wiped Cached Scores for", i)
 	}
 }
@@ -54,7 +55,7 @@ func unban(client *redis.Client) {
 			continue
 		}
 
-		leaderboards.Cache.AddUser(i)
+		leaderboards.AddUser(i)
 		log.Info("[UNRESTRICT] Added Scores to Cache for", i)
 	}
 }
@@ -90,7 +91,7 @@ func wipe(client *redis.Client) {
 			continue
 		}
 
-		leaderboards.Cache.RemoveUserWithIdentifier(i, rx)
+		leaderboards.RemoveUserWithIdentifier(i, rx)
 		log.Info("[WIPE] Wiped Cached Scores for", i, rx)
 	}
 }
@@ -132,6 +133,8 @@ func newScore(client *redis.Client) {
 			return
 		}
 
+		sw := tools.Stopwatch{}
+		sw.Start()
 		ss := strings.SplitN(msg.Payload, ",", 2)
 		if len(ss) != 2 {
 			continue
@@ -172,11 +175,15 @@ func newScore(client *redis.Client) {
 			continue
 		}
 
-		lbp := leaderboards.Cache.Leaderboards[leaderboards.Identifier{md5, mode, rx}]
-		if lbp != nil {
-			lbp.AddScore(s)
+		lb := leaderboards.Get(leaderboards.Identifier{md5, mode, rx})
+		if lb != nil {
+			lb.AddScore(s)
 			log.Info("Added Score", i, "to", md5)
+		} else {
+			log.Info("lb nil")
 		}
+		sw.Stop()
+		log.Infof("Score took %s", sw.ElapsedReadable())
 	}
 }
 
@@ -195,14 +202,14 @@ func changeUsername(client *redis.Client) {
 			return
 		}
 
-		i, err := strconv.Atoi(msg.Payload)
+		id, err := strconv.Atoi(msg.Payload)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
 
 		var newUsername string
-		err = config.DB.QueryRow("SELECT username FROM users WHERE id = ?", i).Scan(&newUsername)
+		err = config.DB.QueryRow("SELECT username FROM users WHERE id = ?", id).Scan(&newUsername)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				continue
@@ -212,10 +219,7 @@ func changeUsername(client *redis.Client) {
 			continue
 		}
 
-		for _, lb := range leaderboards.Cache.Leaderboards {
-			if s, _ := lb.FindUserScore(i); s != nil {
-				s.Username = newUsername
-			}
-		}
+		leaderboards.ChangeUsername(id, newUsername)
+		log.Info("Changed Username", id, "->", newUsername)
 	}
 }

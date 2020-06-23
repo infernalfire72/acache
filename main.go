@@ -25,8 +25,8 @@ func init() {
 		return
 	}
 
-	beatmaps.Cache = &beatmaps.BeatmapCache{make(map[string]*beatmaps.Beatmap)}
-	leaderboards.Cache = &leaderboards.LeaderboardCache{ make(map[leaderboards.Identifier]*leaderboards.Leaderboard) }
+	beatmaps.Init()
+	leaderboards.Init()
 }
 
 func main() {
