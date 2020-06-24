@@ -70,40 +70,42 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 	sw.Start()
 	lb := leaderboards.Get(leaderboards.Identifier{hash, byte(mode), rx})
 
-	if m := lb.Map(); m != nil && m.Status >= beatmaps.StatusRanked {
+	if m := lb.Map(); m != nil {
 		sCount := lb.Count()
 		ctx.WriteString(m.String(sCount))
 
-		if u != 0 {
+		if m.Status >= beatmaps.StatusRanked {
+			if u != 0 {
 			if personalBest, position := lb.FindUserScore(int(u)); personalBest != nil {
 				ctx.WriteString(personalBest.String(!lb.Relax || m.Status == beatmaps.StatusLoved, position+1))
+				} else {
+					ctx.WriteString("\n")
+				}
 			} else {
 				ctx.WriteString("\n")
 			}
-		} else {
-			ctx.WriteString("\n")
-		}
 
-		lb.Mutex.RLock()
-		scores := lb.Scores
+			lb.Mutex.RLock()
+			scores := lb.Scores
 
-		pos := 0
-		for _, score := range scores {
-			if pos >= int(limit) {
-				break
+			pos := 0
+			for _, score := range scores {
+				if pos >= int(limit) {
+					break
+				}
+
+				// We have applied a mod filter
+				if mods >= 0 && score.Mods != int(mods) {
+					continue
+				} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
+					continue
+				}
+
+				ctx.WriteString(score.String(!lb.Relax || m.Status == beatmaps.StatusLoved, pos+1))
+				pos++
 			}
-
-			// We have applied a mod filter
-			if mods >= 0 && score.Mods != int(mods) {
-				continue
-			} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
-				continue
-			}
-
-			ctx.WriteString(score.String(!lb.Relax || m.Status == beatmaps.StatusLoved, pos+1))
-			pos++
+			lb.Mutex.RUnlock()
 		}
-		lb.Mutex.RUnlock()
 	}
 	ctx.SetConnectionClose()
 	sw.Stop()
