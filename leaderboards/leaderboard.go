@@ -86,9 +86,9 @@ func (l *Leaderboard) RemoveScoreIndex(i int) {
 }
 
 func (l *Leaderboard) FetchFromDb() {
-	if m := l.Map(); m != nil && m.Status >= beatmaps.StatusRanked {
-		Scores := make([]*Score, 0)
+	Scores := make([]*Score, 0)
 
+	if m := l.Map(); m != nil && m.Status >= beatmaps.StatusRanked {
 		table := "scores"
 		if l.Relax {
 			table = "scores_relax"
@@ -113,9 +113,9 @@ func (l *Leaderboard) FetchFromDb() {
 			}
 			Scores = append(Scores, s)
 		}
-
-		l.Mutex.Lock()
-		l.Scores = Scores
-		l.Mutex.Unlock()
 	}
+
+	l.Mutex.Lock()
+	l.Scores = Scores
+	l.Mutex.Unlock()
 }
