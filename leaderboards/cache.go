@@ -51,10 +51,10 @@ func RemoveUser(id int) {
 	Mutex.RUnlock()
 }
 
-func RemoveUserWithIdentifier(id int, rx bool) {
+func RemoveUserWithIdentifier(id int, rx bool, gm byte) {
 	Mutex.RLock()
 	for _, a := range Values {
-		if a.Relax == rx {
+		if a.Relax == rx && a.Mode == gm {
 			a.RemoveUser(id)
 		}
 	}

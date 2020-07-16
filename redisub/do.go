@@ -91,8 +91,14 @@ func wipe(client *redis.Client) {
 			continue
 		}
 
-		leaderboards.RemoveUserWithIdentifier(i, rx)
-		log.Info("[WIPE] Wiped Cached Scores for", i, rx)
+		gm, err := strconv.Atoi(ss[2])
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		leaderboards.RemoveUserWithIdentifier(i, rx, byte(gm))
+		log.Info("[WIPE] Wiped Cached Scores for", i, rx, byte(gm))
 	}
 }
 
