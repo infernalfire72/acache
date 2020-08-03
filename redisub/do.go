@@ -74,8 +74,8 @@ func wipe(client *redis.Client) {
 			return
 		}
 
-		ss := strings.SplitN(msg.Payload, ",", 2)
-		if len(ss) != 2 {
+		ss := strings.SplitN(msg.Payload, ",", 3)
+		if len(ss) != 3 {
 			continue
 		}
 
