@@ -93,11 +93,13 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 				if pos >= int(limit) {
 					break
 				}
-
+				
 				// We have applied a mod filter
-				if mods >= 0 && score.Mods != int(mods) {
+				if mods >= 0 && score.Mods != int(mods) && (score.Completed & 4) == 0 {
 					continue
 				} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
+					continue
+				} else if mods == -1 && (score.Completed & 3) != 3 {
 					continue
 				}
 

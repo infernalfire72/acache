@@ -18,6 +18,7 @@ type Score struct {
 	NGeki       int16
 	Mods        int
 	Timestamp   int
+	Completed   int
 }
 
 func (s *Score) String(displayScore bool, pos int) string {
