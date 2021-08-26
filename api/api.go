@@ -99,7 +99,7 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 					continue
 				} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
 					continue
-				} else if mods == -1 && score.Completed == 7 {
+				} else if mods == -1 && score.Completed != 7 {
 					continue
 				}
 
