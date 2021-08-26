@@ -46,7 +46,7 @@ func FetchFromDb(identifier Identifier) *Leaderboard {
 func RemoveUser(id int) {
 	Mutex.RLock()
 	for _, a := range Values {
-		a.RemoveUser(id)
+		a.RemoveUserAll(id)
 	}
 	Mutex.RUnlock()
 }
@@ -55,7 +55,7 @@ func RemoveUserWithIdentifier(id int, rx bool, gm byte) {
 	Mutex.RLock()
 	for _, a := range Values {
 		if a.Relax == rx && a.Mode == gm {
-			a.RemoveUser(id)
+			a.RemoveUserAll(id)
 		}
 	}
 	Mutex.RUnlock()
@@ -98,9 +98,13 @@ func AddUser(id int) {
 func ChangeUsername(id int, newUsername string) {
 	Mutex.RLock()
 	for _, lb := range Values {
-		if s, _ := lb.FindUserScore(id); s != nil {
-			s.Username = newUsername
+		lb.Mutex.RLock()
+		for _, s := range lb.Scores {
+			if s.UserID == id {
+				s.Username = newUsername
+			}
 		}
+		lb.Mutex.RUnlock()
 	}
 	Mutex.RUnlock()
 }

@@ -76,7 +76,7 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 
 		if m.Status >= beatmaps.StatusRanked {
 			if u != 0 {
-			if personalBest, position := lb.FindUserScore(int(u)); personalBest != nil {
+			if personalBest, position := lb.FindUserScore(int(u), -1); personalBest != nil {
 				ctx.WriteString(personalBest.String(!lb.Relax || m.Status == beatmaps.StatusLoved, position+1))
 				} else {
 					ctx.WriteString("\n")
@@ -88,9 +88,9 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 			lb.Mutex.RLock()
 			scores := lb.Scores
 
-			pos := 0
+			pos := 1
 			for _, score := range scores {
-				if pos >= int(limit) {
+				if pos > int(limit) {
 					break
 				}
 				
@@ -99,11 +99,11 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 					continue
 				} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
 					continue
-				} else if mods == -1 && (score.Completed & 3) != 3 {
+				} else if mods == -1 && score.Completed == 7 {
 					continue
 				}
 
-				ctx.WriteString(score.String(!lb.Relax || m.Status == beatmaps.StatusLoved, pos+1))
+				ctx.WriteString(score.String(!lb.Relax || m.Status == beatmaps.StatusLoved, pos))
 				pos++
 			}
 			lb.Mutex.RUnlock()

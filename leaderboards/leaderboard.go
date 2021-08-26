@@ -38,7 +38,11 @@ func (l *Leaderboard) Count() int {
 }
 
 func (l *Leaderboard) AddScore(s *Score) {
-	l.RemoveUser(s.UserID)
+	if (s.Completed & 4) != 0 {
+		l.RemoveUser(s.UserID, s.Mods)
+	} else {
+		l.RemoveUser(s.UserID, -1)
+	}
 
 	l.Mutex.Lock()
 	l.Scores = append(l.Scores, s)
@@ -60,20 +64,34 @@ func (l *Leaderboard) Sort() {
 	}
 }
 
-func (l *Leaderboard) FindUserScore(id int) (*Score, int) {
+func (l *Leaderboard) FindUserScore(id, mods int) (*Score, int) {
 	l.Mutex.RLock()
 	defer l.Mutex.RUnlock()
 	for i, score := range l.Scores {
-		if score.UserID == id {
+		if score.UserID == id && !(mods != -1 && score.Mods != mods) {
 			return score, i
 		}
 	}
 	return nil, -1
 }
 
-func (l *Leaderboard) RemoveUser(id int) {
-	if s, i := l.FindUserScore(id); s != nil {
+func (l *Leaderboard) RemoveUser(id, mods int) {
+	if s, i := l.FindUserScore(id, mods); s != nil {
 		l.RemoveScoreIndex(i)
+	}
+}
+
+func (l *Leaderboard) RemoveUserAll(id int) {
+	l.Mutex.Lock()
+	defer l.Mutex.Unlock()
+	for i := 0; i < len(l.Scores); i++ {
+		if l.Scores[i].UserID == id {
+			if i + 1 < len(l.Scores) {
+				copy(l.Scores[i:], l.Scores[i+1:])
+			}
+			l.Scores[len(l.Scores)-1] = nil
+			l.Scores = l.Scores[:len(l.Scores)-1]
+		}
 	}
 }
 
