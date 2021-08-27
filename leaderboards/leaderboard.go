@@ -38,7 +38,7 @@ func (l *Leaderboard) Count() int {
 }
 
 func (l *Leaderboard) AddScore(s *Score) {
-	if (s.Completed & 4) != 0 {
+	if (s.Completed & 3) != 3 {
 		l.RemoveUser(s.UserID, s.Mods)
 	} else {
 		l.RemoveUser(s.UserID, -1)
