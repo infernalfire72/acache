@@ -38,11 +38,7 @@ func (l *Leaderboard) Count() int {
 }
 
 func (l *Leaderboard) AddScore(s *Score) {
-	if (s.Completed & 3) != 3 {
-		l.RemoveUser(s.UserID, s.Mods)
-	} else {
-		l.RemoveUser(s.UserID, -1)
-	}
+	l.RemoveUser(s.UserID)
 
 	l.Mutex.Lock()
 	l.Scores = append(l.Scores, s)
@@ -64,34 +60,20 @@ func (l *Leaderboard) Sort() {
 	}
 }
 
-func (l *Leaderboard) FindUserScore(id, mods int) (*Score, int) {
+func (l *Leaderboard) FindUserScore(id int) (*Score, int) {
 	l.Mutex.RLock()
 	defer l.Mutex.RUnlock()
 	for i, score := range l.Scores {
-		if score.UserID == id && !(mods != -1 && score.Mods != mods) {
+		if score.UserID == id {
 			return score, i
 		}
 	}
 	return nil, -1
 }
 
-func (l *Leaderboard) RemoveUser(id, mods int) {
-	if s, i := l.FindUserScore(id, mods); s != nil {
+func (l *Leaderboard) RemoveUser(id int) {
+	if s, i := l.FindUserScore(id); s != nil {
 		l.RemoveScoreIndex(i)
-	}
-}
-
-func (l *Leaderboard) RemoveUserAll(id int) {
-	l.Mutex.Lock()
-	defer l.Mutex.Unlock()
-	for i := 0; i < len(l.Scores); i++ {
-		if l.Scores[i].UserID == id {
-			if i + 1 < len(l.Scores) {
-				copy(l.Scores[i:], l.Scores[i+1:])
-			}
-			l.Scores[len(l.Scores)-1] = nil
-			l.Scores = l.Scores[:len(l.Scores)-1]
-		}
 	}
 }
 
@@ -117,7 +99,7 @@ func (l *Leaderboard) FetchFromDb() {
 			tableSort = "pp"
 		}
 
-		rows, err := config.DB.Query("SELECT "+table+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, completed FROM "+table+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE beatmap_md5 = ? AND (completed & 7) >= 3 AND play_mode = ? AND users.privileges & 1 ORDER BY "+tableSort+" DESC", l.BeatmapMd5, l.Mode)
+		rows, err := config.DB.Query("SELECT "+table+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time FROM "+table+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE beatmap_md5 = ? AND completed = 3 AND play_mode = ? AND users.privileges & 1 ORDER BY "+tableSort+" DESC", l.BeatmapMd5, l.Mode)
 		if err != nil {
 			log.Error(err)
 		}
@@ -125,7 +107,7 @@ func (l *Leaderboard) FetchFromDb() {
 
 		for rows.Next() {
 			s := &Score{}
-			err = rows.Scan(&s.ID, &s.UserID, &s.Score, &s.Performance, &s.Username, &s.Combo, &s.FullCombo, &s.Mods, &s.N300, &s.N100, &s.N50, &s.NKatu, &s.NGeki, &s.NMiss, &s.Timestamp, &s.Completed)
+			err = rows.Scan(&s.ID, &s.UserID, &s.Score, &s.Performance, &s.Username, &s.Combo, &s.FullCombo, &s.Mods, &s.N300, &s.N100, &s.N50, &s.NKatu, &s.NGeki, &s.NMiss, &s.Timestamp)
 			if err != nil {
 				log.Error(err)
 			}

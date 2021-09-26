@@ -46,7 +46,7 @@ func FetchFromDb(identifier Identifier) *Leaderboard {
 func RemoveUser(id int) {
 	Mutex.RLock()
 	for _, a := range Values {
-		a.RemoveUserAll(id)
+		a.RemoveUser(id)
 	}
 	Mutex.RUnlock()
 }
@@ -55,7 +55,7 @@ func RemoveUserWithIdentifier(id int, rx bool, gm byte) {
 	Mutex.RLock()
 	for _, a := range Values {
 		if a.Relax == rx && a.Mode == gm {
-			a.RemoveUserAll(id)
+			a.RemoveUser(id)
 		}
 	}
 	Mutex.RUnlock()
@@ -68,7 +68,7 @@ func AddUser(id int) {
 			relax = true
 		}
 
-		rows, err := config.DB.Query("SELECT "+table+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5, completed FROM "+table+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE userid = ? AND (completed & 7) >= 3", id)
+		rows, err := config.DB.Query("SELECT "+table+".id, userid, score, pp, COALESCE(CONCAT('[', tag, '] ', username), username) AS username, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, beatmap_md5 FROM "+table+" LEFT JOIN users ON users.id = userid LEFT JOIN clans ON clans.id = users.clan_id WHERE userid = ? AND completed = 3", id)
 		if err != nil {
 			log.Error(err)
 		}
@@ -80,7 +80,7 @@ func AddUser(id int) {
 				md5  string
 				mode byte
 			)
-			err = rows.Scan(&s.ID, &s.UserID, &s.Score, &s.Performance, &s.Username, &s.Combo, &s.FullCombo, &s.Mods, &s.N300, &s.N100, &s.N50, &s.NKatu, &s.NGeki, &s.NMiss, &s.Timestamp, &mode, &md5, &s.Completed)
+			err = rows.Scan(&s.ID, &s.UserID, &s.Score, &s.Performance, &s.Username, &s.Combo, &s.FullCombo, &s.Mods, &s.N300, &s.N100, &s.N50, &s.NKatu, &s.NGeki, &s.NMiss, &s.Timestamp, &mode, &md5)
 			if err != nil {
 				log.Error(err)
 			}
@@ -98,13 +98,9 @@ func AddUser(id int) {
 func ChangeUsername(id int, newUsername string) {
 	Mutex.RLock()
 	for _, lb := range Values {
-		lb.Mutex.RLock()
-		for _, s := range lb.Scores {
-			if s.UserID == id {
-				s.Username = newUsername
-			}
+		if s, _ := lb.FindUserScore(id); s != nil {
+			s.Username = newUsername
 		}
-		lb.Mutex.RUnlock()
 	}
 	Mutex.RUnlock()
 }

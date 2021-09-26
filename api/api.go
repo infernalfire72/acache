@@ -76,7 +76,7 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 
 		if m.Status >= beatmaps.StatusRanked {
 			if u != 0 {
-			if personalBest, position := lb.FindUserScore(int(u), -1); personalBest != nil {
+			if personalBest, position := lb.FindUserScore(int(u)); personalBest != nil {
 				ctx.WriteString(personalBest.String(!lb.Relax || m.Status == beatmaps.StatusLoved, position+1))
 				} else {
 					ctx.WriteString("\n")
@@ -93,13 +93,11 @@ func LeaderboardHandler(ctx *fasthttp.RequestCtx) {
 				if pos > int(limit) {
 					break
 				}
-				
+
 				// We have applied a mod filter
-				if mods >= 0 && (score.Mods != int(mods) || (score.Completed & 4) == 0) {
+				if mods >= 0 && (score.Mods != int(mods)) {
 					continue
 				} else if fl && !tools.Has(friendsFilter, score.UserID) { // We have applied the friend ranking
-					continue
-				} else if mods == -1 && score.Completed != 7 {
 					continue
 				}
 
